@@ -1,6 +1,0 @@
-gitea
-workflow-aggregator
-configuration-as-code
-docker-workflow
-telegram-notifications
-generic-webhook-trigger

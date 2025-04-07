@@ -1,20 +1,16 @@
-version: '3.8'
-
 services:
   gitea:
     image: gitea/gitea:latest
     container_name: gitea
-    environment:
-      - GITEA_ADMIN_USER=admin
-      - GITEA_ADMIN_PASSWORD=admin123
+    networks:
+      - devops-net
     volumes:
       - ./gitea/app.ini:/data/gitea/conf/app.ini
-      - ./gitea/init:/docker-entrypoint-init.d
       - gitea_data:/data
     ports:
       - "3000:3000"
-    networks:
-      - devops-net
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3000"]
       interval: 10s
@@ -24,24 +20,17 @@ services:
   jenkins:
     image: jenkins/jenkins:latest
     container_name: jenkins
+    network_mode: "host"
     volumes:
       - jenkins_data:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
       - ./jenkins/casc:/var/jenkins_home/casc_configs
-      - ./jenkins/plugins.txt:/usr/share/jenkins/ref/plugins.txt
-    ports:
-      - "8080:8080"
     environment:
       JAVA_OPTS: "-Djenkins.install.runSetupWizard=false"
-      CASC_JENKINS_CONFIG: "/var/jenkins_home/casc_configs"
-    networks:
-      - devops-net
     depends_on:
       gitea:
         condition: service_healthy
-    dns:
-      - 8.8.8.8
-      - 4.4.4.4
+
 networks:
   devops-net:
     driver: bridge

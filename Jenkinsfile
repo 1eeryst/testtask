@@ -6,10 +6,11 @@ pipeline {
     }
 
     environment {
-        GITEA_URL = "http://gitea:3000"
-        GITEA_TOKEN = credentials('gitea-token')
-        TELEGRAM_TOKEN = credentials('telegram-token')
-        TELEGRAM_CHAT_ID = "YOUR_CHAT_ID"
+        GITEA_URL = "http://localhot:3000"
+        GITEA_TOKEN = credentials('Gitea')
+	GITEA_USER = admin
+#       TELEGRAM_TOKEN = credentials('telegram-token')
+#       TELEGRAM_CHAT_ID = "YOUR_CHAT_ID"
         APP_NAME = "hello-world"
         APP_PORT = "5000"
     }
@@ -30,11 +31,11 @@ pipeline {
                     def prTitle = jq -r '.title' <<< "${prData}"
                     if (prTitle.contains("[WIP]") && !params.FORCE_BUILD) {
                         currentBuild.result = 'NOT_BUILT'
-                        
+
                         sh """
                             curl -X POST -H "Authorization: token ${GITEA_TOKEN}" \
-                            ${GITEA_URL}/api/v1/repos/admin/hello-world/issues/${env.CHANGE_ID}/comments \
-                            -d '{"body": "🚫 Сборка заблокирована: WIP-статус"}'
+                            ${GITEA_URL}/api/v1/repos/${GITEA_USER}/hello-world/issues/${env.CHANGE_ID}/comments \
+                            -d '{"body": "Сборка заблокирована: WIP-статус"}'
                         """
                         error("Сборка пропущена из-за WIP-статуса")
                     }
@@ -73,15 +74,16 @@ pipeline {
         }
     }
 
-    post {
-        always {
-            script {
-                def status = currentBuild.result ?: 'SUCCESS'
-                sh """
-                    curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
-                    -d "chat_id=${TELEGRAM_CHAT_ID}&text=Build status: ${status}"
-                """
-            }
-        }
-    }
+#    post {
+#        always {
+#            script {
+#                def status = currentBuild.result ?: 'SUCCESS'
+#                sh """
+#                    curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
+#                    -d "chat_id=${TELEGRAM_CHAT_ID}&text=Статус Build ${status}"
+#                """
+#            }
+#        }
+#    }
 }
+	
